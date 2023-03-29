@@ -1,0 +1,26 @@
+.App .heading {
+  text-align: center;
+}
+
+.App {
+  text-align: center;
+}
+
+.App .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+  margin: 15px auto;
+}
+
+.App .info-div {
+  text-align: start;
+  margin-left: 25px;
+}
+
+.App .video-div {
+  max-width: 480px;
+  max-height: 480px;
+  margin: auto;
+}

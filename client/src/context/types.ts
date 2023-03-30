@@ -14,4 +14,5 @@ export interface IUser {
     setStream: (e: MediaStream) => void,
     viewers: string[],
     setUser: (e: { name: string, room: string }) => void
+    broadcasters: Record<string, { id: string, name: string }>
 }

@@ -17,12 +17,22 @@ const broadcasters = {};
 io.on('connection', (socket) => {
   console.log('connection establisted!!!')
 
-  socket.on("register as broadcaster", (room) => {
-    console.log("register as broadcaster for room", room);
 
-    broadcasters[room] = socket.id;
+  // Sending all broadcasters to client
+  socket.emit('broadcasters', broadcasters);
 
-    socket.join(room);
+  socket.on("register as broadcaster", (user) => {
+    // Additional validation for duplicate broadcaster in same room
+    if (broadcasters[user.room]) {
+      console.log(`${broadcasters[user.room].name} is already broadcasting in room ${user.room}`)
+    }
+    else {
+      console.log("register as broadcaster for room", user.room);
+
+      broadcasters[user.room] = { id: socket.id, name: user.name };
+
+      socket.join(user.room);
+    }
   });
 
   socket.on("register as viewer", (user) => {
@@ -31,8 +41,7 @@ io.on('connection', (socket) => {
     socket.join(user.room);
     user.id = socket.id;
 
-    console.log('emit ice candidate: ')
-    socket.to(broadcasters[user.room]).emit("new viewer", user);
+    socket.to(broadcasters[user.room].id).emit("new viewer", user);
   });
 
   socket.on("candidate", (id, event) => {
@@ -48,7 +57,7 @@ io.on('connection', (socket) => {
 
   socket.on("answer", (event) => {
     console.log('emit answer: ')
-    socket.to(broadcasters[event.room]).emit("answer", socket.id, event.sdp);
+    socket.to(broadcasters[event.room].id).emit("answer", socket.id, event.sdp);
   });
 });
 

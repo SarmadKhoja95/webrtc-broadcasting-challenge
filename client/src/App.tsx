@@ -5,7 +5,7 @@ import useUser from './hooks/useUser';
 const streamConstraints = { audio: false, video: { height: 480 } };
 
 const App = () => {
-  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, setUser } = useUser()
+  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, setUser, broadcasters } = useUser()
 
   const handleJoinBroadcaster = async () => {
     try {
@@ -13,13 +13,19 @@ const App = () => {
         alert("Please type a room number and a name");
         return
       }
-      setUser({ room, name })
+      // Stop if someone is already broadcasting in the same room
+      if (broadcasters[room]) {
+        alert(`${broadcasters[room].name} is already broadcating in room ${room}`)
+        return
+      }
+      const newUser = { room, name }
+      setUser(newUser)
       setBroadcasterName(name)
       const myStream = await navigator.mediaDevices
         .getUserMedia(streamConstraints)
       setStream(myStream)
       setRoomJoined(true)
-      socket.emit("register as broadcaster", room);
+      socket.emit("register as broadcaster", newUser);
     } catch (e) {
       console.log('Erron in getting user media:', e)
     }
@@ -28,6 +34,11 @@ const App = () => {
     try {
       if (room === "" || name === "") {
         alert("Please type a room number and a name");
+        return
+      }
+      // Stop if no one is broadcasting in the room
+      if (!broadcasters[room]) {
+        alert(`No broadcaster found in room ${room}!`)
         return
       }
       const viewer = { room, name }

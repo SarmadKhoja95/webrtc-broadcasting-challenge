@@ -28,6 +28,7 @@ const UserContextProvider = ({ children }: any) => {
     // @ts-ignore
     const [stream, setStream] = useState<MediaStream>(null);
     const [viewers, setViewers] = useState<string[]>([]);
+    const [broadcasters, setBroadcasters] = useState<Record<string, { id: string, name: string }>>({})
 
     useEffect(() => {
         const handleNewViewer = async (viewer: { id: string, name: string }) => {
@@ -117,19 +118,29 @@ const UserContextProvider = ({ children }: any) => {
             }
         };
 
+        const handleBroadcasters = (data: any) => {
+            try {
+                setBroadcasters(data)
+            } catch (e) {
+                console.log('Error in broadsters handler:', e)
+            }
+        }
+
         // message handlers
         socket.on("new viewer", handleNewViewer);
         socket.on("candidate", handleCandidate);
         socket.on("offer", handleOffer);
         socket.on("answer", handleAnswer);
+        socket.on("broadcasters", handleBroadcasters)
 
         return () => {
             socket.off("new viewer", handleNewViewer);
             socket.off("candidate", handleCandidate);
             socket.off("offer", handleOffer);
             socket.off("answer", handleAnswer);
+            socket.off("broadcasters", handleBroadcasters)
         };
-    }, [stream, setBroadcasterName, setName, setStream, setViewers, socket, viewers, user]);
+    }, [stream, setBroadcasterName, setName, setStream, setViewers, socket, viewers, user, setBroadcasters]);
 
     useEffect(() => {
         socket.connect()
@@ -153,7 +164,8 @@ const UserContextProvider = ({ children }: any) => {
                 stream,
                 setStream,
                 viewers,
-                setUser
+                setUser,
+                broadcasters
             } as IUser
             }
         >

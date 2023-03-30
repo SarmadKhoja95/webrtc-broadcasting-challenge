@@ -17,5 +17,6 @@ export interface IUser {
     setUser: (e: { name: string, room: string }) => void
     broadcasters: Record<string, { id: string, name: string }>
     muteMicrophone: boolean
-    toggleMicrophone: () => void
+    toggleMicrophone: () => void,
+    replaceTracks: (audio:MediaStreamTrack, video:MediaStreamTrack) => void
 }

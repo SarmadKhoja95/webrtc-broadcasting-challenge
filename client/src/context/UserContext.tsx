@@ -160,6 +160,23 @@ const UserContextProvider = ({ children }: any) => {
         }
     }
 
+    const replaceTracks = (videoTrack: MediaStreamTrack, audioTrack: MediaStreamTrack) => {
+        try {
+            Object.values(rtcPeerConnections).forEach(pc => {
+                const video = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (video) {
+                    video.replaceTrack(videoTrack)
+                }
+                const audio = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+                if (audio) {
+                    audio.replaceTrack(audioTrack)
+                }
+            });
+        } catch (e) {
+            console.log('Error in replacing senders tracks:', e)
+        }
+    }
+
     return (
         <UserContext.Provider
             value={{
@@ -179,7 +196,8 @@ const UserContextProvider = ({ children }: any) => {
                 setUser,
                 broadcasters,
                 muteMicrophone,
-                toggleMicrophone
+                toggleMicrophone,
+                replaceTracks
             } as IUser
             }
         >

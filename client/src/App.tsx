@@ -1,12 +1,47 @@
 import ReactPlayer from 'react-player';
 import './App.css';
 import useUser from './hooks/useUser';
+import { useState } from 'react';
 
 const streamConstraints = { audio: true, video: { height: 480 } };
 
 const App = () => {
-  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, user, setUser, broadcasters, muteMicrophone, toggleMicrophone } = useUser()
+  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, user, setUser, broadcasters, muteMicrophone, toggleMicrophone, replaceTracks } = useUser()
   const isBroadcaster = broadcasterName === user.name
+  const [microphoneOptions, setMicrophoneOptions] = useState<MediaDeviceInfo[]>([])
+  const [microphone, setMicrophone] = useState<string>('')
+  const [camera, setCamera] = useState<string>('')
+  const [cameraOptions, setCameraOptions] = useState<MediaDeviceInfo[]>([])
+
+  const detectPermissions = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const mDevices = devices.filter(d => d.kind === 'audioinput');
+      setMicrophoneOptions(mDevices)
+      setMicrophone(mDevices[0].deviceId)
+      const cDevices = devices.filter(d => d.kind === 'videoinput');
+      setCameraOptions(cDevices)
+      setCamera(cDevices[0].deviceId)
+      const hasCamera = !!devices.find(d => d.kind === 'videoinput');
+      const hasMicrophone = !!devices.find(d => d.kind === 'audioinput');
+      const hasCameraPermission = !!devices.find(d => d.kind === 'videoinput' && d.label !== '');
+      const hasMicrophonePermission = !!devices.find(d => d.kind === 'audioinput' && d.label !== '');
+
+      if ((hasCamera && hasCameraPermission) && (hasMicrophone && hasMicrophonePermission)) {
+        // We have permissions, go ahead and call getUserMedia
+        return true
+      } else {
+        if (hasCamera || hasMicrophone) {
+          // Show a dialog to explain the user you are going to request permission
+          return true
+        } else {
+          throw new Error('You do not appear to have a camera or microphone attached')
+        }
+      }
+    } catch (e) {
+      console.log('Err while detecting permission:', e)
+    }
+  }
 
   const handleJoinBroadcaster = async () => {
     try {
@@ -19,14 +54,15 @@ const App = () => {
         alert(`${broadcasters[room].name} is already broadcating in room ${room}`)
         return
       }
+      const permissions = await detectPermissions()
+      if (!permissions) return
       const newUser = { room, name }
       setUser(newUser)
       setBroadcasterName(name)
-      const myStream = await navigator.mediaDevices
-        .getUserMedia(streamConstraints)
+      const myStream = await navigator.mediaDevices.getUserMedia(streamConstraints)
       setStream(myStream)
-      setRoomJoined(true)
       socket.emit("register as broadcaster", newUser);
+      setRoomJoined(true)
     } catch (e) {
       console.log('Erron in getting user media:', e)
     }
@@ -51,6 +87,29 @@ const App = () => {
     }
   }
 
+  const onChangeTracks = async (audioSource: string, videoSource: string) => {
+    try {
+      if (stream) {
+        stream.getTracks().forEach(track => {
+          track.stop();
+        });
+      }
+      // @ts-ignore
+      setStream(null)
+      setMicrophone(audioSource)
+      setCamera(videoSource)
+      const constraints = {
+        audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
+        video: { deviceId: videoSource ? { exact: videoSource } : undefined, height: 480 }
+      };
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints)
+      setStream(newStream)
+      replaceTracks(newStream.getVideoTracks()[0], newStream.getAudioTracks()[0])
+    } catch (e) {
+      console.log('Error in changing tracks:', e)
+    }
+  }
+
   return (
     <div className="App">
       <h1 className='heading'>WebRTC Video Conference Tutorial - Plain WebRTC</h1>
@@ -66,6 +125,16 @@ const App = () => {
           {stream && <ReactPlayer height='100%' width='100%' url={stream} playing />}
           {isBroadcaster && <div className='actions-div'>
             <button onClick={toggleMicrophone}>{!muteMicrophone ? 'Mute microphone' : 'Unmute microphone'}</button>
+            <p>Microphones: <select value={microphone} onChange={(e) => onChangeTracks(e.target.value, camera)}>
+              <option value='' hidden>Pick a microphone</option>
+              {microphoneOptions.map((m) => <option key={m.deviceId} value={m.deviceId}>{m.label}</option>)}
+            </select>
+            </p>
+            <p>Cameras: <select value={camera} onChange={(e) => onChangeTracks(microphone, e.target.value)}>
+              <option value='' hidden>Pick a camera</option>
+              {cameraOptions.map((c) => <option key={c.deviceId} value={c.deviceId}>{c.label}</option>)}
+            </select>
+            </p>
           </div>}
         </div>
         <div>

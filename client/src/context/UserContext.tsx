@@ -29,6 +29,7 @@ const UserContextProvider = ({ children }: any) => {
     const [stream, setStream] = useState<MediaStream>(null);
     const [viewers, setViewers] = useState<string[]>([]);
     const [broadcasters, setBroadcasters] = useState<Record<string, { id: string, name: string }>>({})
+    const [muteMicrophone, setMuteMicrophone] = useState<boolean>(false)
 
     useEffect(() => {
         const handleNewViewer = async (viewer: { id: string, name: string }) => {
@@ -149,6 +150,16 @@ const UserContextProvider = ({ children }: any) => {
         }
     }, [socket])
 
+    const toggleMicrophone = () => {
+        try {
+            const audioTrack = stream.getAudioTracks()[0];
+            setMuteMicrophone(!muteMicrophone)
+            audioTrack.enabled = !audioTrack.enabled;
+        } catch (e) {
+            console.log('Error in microphone toggler:', e)
+        }
+    }
+
     return (
         <UserContext.Provider
             value={{
@@ -164,8 +175,11 @@ const UserContextProvider = ({ children }: any) => {
                 stream,
                 setStream,
                 viewers,
+                user,
                 setUser,
-                broadcasters
+                broadcasters,
+                muteMicrophone,
+                toggleMicrophone
             } as IUser
             }
         >

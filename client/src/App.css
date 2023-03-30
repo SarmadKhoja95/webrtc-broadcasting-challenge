@@ -24,3 +24,7 @@
   max-height: 480px;
   margin: auto;
 }
+
+.App .video-div .actions-div {
+  margin-top: 12px;
+}

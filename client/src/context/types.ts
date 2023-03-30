@@ -13,6 +13,9 @@ export interface IUser {
     stream: MediaStream,
     setStream: (e: MediaStream) => void,
     viewers: string[],
+    user: { name: string, room: string }
     setUser: (e: { name: string, room: string }) => void
     broadcasters: Record<string, { id: string, name: string }>
+    muteMicrophone: boolean
+    toggleMicrophone: () => void
 }

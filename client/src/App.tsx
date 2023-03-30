@@ -2,10 +2,11 @@ import ReactPlayer from 'react-player';
 import './App.css';
 import useUser from './hooks/useUser';
 
-const streamConstraints = { audio: false, video: { height: 480 } };
+const streamConstraints = { audio: true, video: { height: 480 } };
 
 const App = () => {
-  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, setUser, broadcasters } = useUser()
+  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, user, setUser, broadcasters, muteMicrophone, toggleMicrophone } = useUser()
+  const isBroadcaster = broadcasterName === user.name
 
   const handleJoinBroadcaster = async () => {
     try {
@@ -63,6 +64,9 @@ const App = () => {
       {roomJoined && <div>
         <div className='video-div'>
           {stream && <ReactPlayer height='100%' width='100%' url={stream} playing />}
+          {isBroadcaster && <div className='actions-div'>
+            <button onClick={toggleMicrophone}>{!muteMicrophone ? 'Mute microphone' : 'Unmute microphone'}</button>
+          </div>}
         </div>
         <div>
         </div>

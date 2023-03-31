@@ -12,6 +12,8 @@ const iceServers = {
 };
 // variables
 let rtcPeerConnections: Record<string, RTCPeerConnection> = {};
+let broadcasterChannels: RTCDataChannel[] = []
+
 // @ts-ignore
 const UserContext = createContext<IUser>(null);
 
@@ -30,6 +32,17 @@ const UserContextProvider = ({ children }: any) => {
     const [viewers, setViewers] = useState<string[]>([]);
     const [broadcasters, setBroadcasters] = useState<Record<string, { id: string, name: string }>>({})
     const [muteMicrophone, setMuteMicrophone] = useState<boolean>(false)
+    const [viewerChannel, setViewerChannel] = useState<RTCDataChannel | undefined>(undefined)
+    const [messagesList, setMessagesList] = useState<{ name: string, text: string }[]>([])
+    const [message, setMessage] = useState<{ name: string, text: string }>({ name: '', text: '' })
+
+    useEffect(() => {
+        const updateMessagesList = () => {
+            setMessagesList([...messagesList, message])
+            setMessage({ name: '', text: '' })
+        }
+        message.name && message.text && updateMessagesList()
+    }, [message, messagesList])
 
     useEffect(() => {
         const handleNewViewer = async (viewer: { id: string, name: string }) => {
@@ -49,6 +62,20 @@ const UserContextProvider = ({ children }: any) => {
                     }
                 };
 
+                const channel = rtcPeerConnections[viewer.id].createDataChannel('messaging-channel', { ordered: true })
+                broadcasterChannels.push(channel)
+                // setBroadcasterChannel(channel)
+                channel.binaryType = 'arraybuffer'
+                channel.onopen = () => {
+                    console.log('broadcaster channel opened!!!!')
+                }
+                channel.onclose = () => {
+                    console.log('broadcaster channel closed!!!!')
+                }
+                channel.onmessage = (e) => {
+                    console.log(`Remote message received by viewer: ${e.data}`);
+                    setMessage({ name: viewer.name, text: e.data })
+                }
                 const offerSdp = await rtcPeerConnections[viewer.id].createOffer();
                 rtcPeerConnections[viewer.id].setLocalDescription(offerSdp);
                 socket.emit("offer", viewer.id, {
@@ -84,9 +111,24 @@ const UserContextProvider = ({ children }: any) => {
 
                 rtcPeerConnections[broadcaster.id].ontrack = (event) => setStream(event.streams[0]);
 
-                const answerSdp = await rtcPeerConnections[
-                    broadcaster.id
-                ].createAnswer();
+                rtcPeerConnections[broadcaster.id].ondatachannel = (event) => {
+                    console.log(`onRemoteDataChannel: ${JSON.stringify(event)}`);
+                    const channel = event.channel
+                    channel.binaryType = 'arraybuffer'
+                    setViewerChannel(channel)
+                    channel.onopen = () => {
+                        console.log('viewer channel opened!!!!')
+                    }
+                    channel.onclose = () => {
+                        console.log('viewer channel closed!!!!')
+                    }
+                    channel.onmessage = (e) => {
+                        console.log(`Remote message received by broadcaster: ${e.data}`);
+                        setMessage({ name: broadcaster.name, text: e.data })
+                    }
+                }
+
+                const answerSdp = await rtcPeerConnections[broadcaster.id].createAnswer();
                 rtcPeerConnections[broadcaster.id].setLocalDescription(answerSdp);
                 socket.emit("answer", {
                     type: "answer",
@@ -141,6 +183,7 @@ const UserContextProvider = ({ children }: any) => {
             socket.off("answer", handleAnswer);
             socket.off("broadcasters", handleBroadcasters)
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stream, setBroadcasterName, setName, setStream, setViewers, socket, viewers, user, setBroadcasters]);
 
     useEffect(() => {
@@ -197,7 +240,11 @@ const UserContextProvider = ({ children }: any) => {
                 broadcasters,
                 muteMicrophone,
                 toggleMicrophone,
-                replaceTracks
+                replaceTracks,
+                viewerChannel,
+                broadcasterChannels,
+                messagesList,
+                setMessagesList
             } as IUser
             }
         >

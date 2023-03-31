@@ -27,4 +27,68 @@
 
 .App .video-div .actions-div {
   margin-top: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.App .chat-view {
+  border: 1px solid gray;
+  border-radius: 8px;
+  width: max-content;
+  margin: auto;
+  padding: 12px;
+}
+
+.App .chat-view h3 {
+  margin: 0;
+}
+
+.App .chat-view p {
+  margin: 12px 0;
+  font-size: 12px;
+}
+
+.App .messages-view {
+  font-size: 14px;
+  border: 1px solid lightgray;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  padding: 12px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+}
+
+.App .messages-view .empty-text {
+  color: gray;
+}
+
+.App .msg-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.App .msg-item {
+  text-align: left;
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+  width: max-content;
+  padding: 4px;
+  margin-bottom: 6px;
+  align-self: flex-start;
+}
+
+.App .msg-item.me {
+  align-self: flex-end;
+}
+
+.App .user-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.App .msg-text {
+  font-size: 13px;
 }

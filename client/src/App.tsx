@@ -6,12 +6,13 @@ import { useState } from 'react';
 const streamConstraints = { audio: true, video: { height: 480 } };
 
 const App = () => {
-  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, user, setUser, broadcasters, muteMicrophone, toggleMicrophone, replaceTracks } = useUser()
+  const { socket, name, setName, room, setRoom, broadcasterName, setBroadcasterName, roomJoined, setRoomJoined, stream, setStream, viewers, user, setUser, broadcasters, muteMicrophone, toggleMicrophone, replaceTracks, viewerChannel, broadcasterChannels, messagesList, setMessagesList } = useUser()
   const isBroadcaster = broadcasterName === user.name
   const [microphoneOptions, setMicrophoneOptions] = useState<MediaDeviceInfo[]>([])
   const [microphone, setMicrophone] = useState<string>('')
   const [camera, setCamera] = useState<string>('')
   const [cameraOptions, setCameraOptions] = useState<MediaDeviceInfo[]>([])
+  const [message, setMessage] = useState<string>('')
 
   const detectPermissions = async () => {
     try {
@@ -110,6 +111,19 @@ const App = () => {
     }
   }
 
+  const onSendMessage = () => {
+    try {
+      if (!message) return
+      if (isBroadcaster) broadcasterChannels.forEach(ch => ch.send(message))
+      else viewerChannel.send(message)
+      const messages = [...messagesList, { name: user.name, text: message }]
+      setMessagesList(messages)
+      setMessage('')
+    } catch (e) {
+      console.log('Error while sending message:', e)
+    }
+  }
+
   return (
     <div className="App">
       <h1 className='heading'>WebRTC Video Conference Tutorial - Plain WebRTC</h1>
@@ -124,17 +138,19 @@ const App = () => {
         <div className='video-div'>
           {stream && <ReactPlayer height='100%' width='100%' url={stream} playing />}
           {isBroadcaster && <div className='actions-div'>
-            <button onClick={toggleMicrophone}>{!muteMicrophone ? 'Mute microphone' : 'Unmute microphone'}</button>
-            <p>Microphones: <select value={microphone} onChange={(e) => onChangeTracks(e.target.value, camera)}>
-              <option value='' hidden>Pick a microphone</option>
-              {microphoneOptions.map((m) => <option key={m.deviceId} value={m.deviceId}>{m.label}</option>)}
-            </select>
-            </p>
-            <p>Cameras: <select value={camera} onChange={(e) => onChangeTracks(microphone, e.target.value)}>
-              <option value='' hidden>Pick a camera</option>
-              {cameraOptions.map((c) => <option key={c.deviceId} value={c.deviceId}>{c.label}</option>)}
-            </select>
-            </p>
+            <div>
+              <button onClick={toggleMicrophone}>{!muteMicrophone ? 'Mute microphone' : 'Unmute microphone'}</button>
+              <p>Microphones: <select value={microphone} onChange={(e) => onChangeTracks(e.target.value, camera)}>
+                <option value='' hidden>Pick a microphone</option>
+                {microphoneOptions.map((m) => <option key={m.deviceId} value={m.deviceId}>{m.label}</option>)}
+              </select>
+              </p>
+              <p>Cameras: <select value={camera} onChange={(e) => onChangeTracks(microphone, e.target.value)}>
+                <option value='' hidden>Pick a camera</option>
+                {cameraOptions.map((c) => <option key={c.deviceId} value={c.deviceId}>{c.label}</option>)}
+              </select>
+              </p>
+            </div>
           </div>}
         </div>
         <div>
@@ -142,6 +158,27 @@ const App = () => {
         <div className='info-div'>
           <p>{broadcasterName} is broadcasting...</p>
           <ul>{viewers.map((v: string, index: number) => <li key={index}>{`${v} has joined`}</li>)}</ul>
+        </div>
+        <div className='chat-view'>
+          <h3>Chat</h3>
+          <p>Send to {isBroadcaster ? "viewers" : "broadcaster"}</p>
+          <div className='messages-view'>
+            {messagesList.length > 0 ?
+              messagesList.map((item, index) => (
+                <div key={index} className={`msg-item ${name === item.name && 'me'}`}>
+                  <div>
+                    <div className='user-text'>{item.name}</div>
+                    <div className='msg-text'>{item.text}</div>
+                  </div>
+                </div>
+              ))
+              :
+              <div className='empty-text'>Messages will be shown here</div>}
+          </div>
+          <div className='msg-box'>
+            <input placeholder={`Write message here...`} value={message} onChange={(e) => setMessage(e.target.value)} />
+            <button disabled={!viewers?.length || !message} onClick={onSendMessage}>Send</button>
+          </div>
         </div>
       </div>}
     </div>

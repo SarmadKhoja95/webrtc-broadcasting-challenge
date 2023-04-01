@@ -18,7 +18,9 @@
     "socket.io": "^4.6.1"
   },
   "engines": {
-    "node": "16.x"
+    "node": "16.19.1",
+    "npm": "8.19.3",
+    "yarn": "1.22.18"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

@@ -18,6 +18,8 @@ export interface IUser {
     broadcasters: Record<string, { id: string, name: string }>
     muteMicrophone: boolean
     toggleMicrophone: () => void,
+    muteVideo: boolean
+    toggleVideo: () => void,
     replaceTracks: (audio: MediaStreamTrack, video: MediaStreamTrack) => void
     viewerChannel: RTCDataChannel
     broadcasterChannels: RTCDataChannel[]

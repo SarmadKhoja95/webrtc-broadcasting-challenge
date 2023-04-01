@@ -4,15 +4,18 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import './index.css';
 import { UserContextProvider } from './context/UserContext';
+import { ThemeContextProvider } from './context/ThemeContext';
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <UserContextProvider>
-      <App />
-    </UserContextProvider>
+    <ThemeContextProvider>
+      <UserContextProvider>
+        <App />
+      </UserContextProvider>
+    </ThemeContextProvider>
   </React.StrictMode>
 );
 

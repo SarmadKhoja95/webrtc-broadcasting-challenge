@@ -32,6 +32,7 @@ const UserContextProvider = ({ children }: any) => {
     const [viewers, setViewers] = useState<string[]>([]);
     const [broadcasters, setBroadcasters] = useState<Record<string, { id: string, name: string }>>({})
     const [muteMicrophone, setMuteMicrophone] = useState<boolean>(false)
+    const [muteVideo, setMuteVideo] = useState<boolean>(false)
     const [viewerChannel, setViewerChannel] = useState<RTCDataChannel | undefined>(undefined)
     const [messagesList, setMessagesList] = useState<{ name: string, text: string }[]>([])
     const [message, setMessage] = useState<{ name: string, text: string }>({ name: '', text: '' })
@@ -203,6 +204,16 @@ const UserContextProvider = ({ children }: any) => {
         }
     }
 
+    const toggleVideo = () => {
+        try {
+            const videoTrack = stream.getVideoTracks()[0];
+            setMuteVideo(!muteVideo)
+            videoTrack.enabled = !videoTrack.enabled;
+        } catch (e) {
+            console.log('Error in video toggler:', e)
+        }
+    }
+
     const replaceTracks = (videoTrack: MediaStreamTrack, audioTrack: MediaStreamTrack) => {
         try {
             Object.values(rtcPeerConnections).forEach(pc => {
@@ -240,6 +251,8 @@ const UserContextProvider = ({ children }: any) => {
                 broadcasters,
                 muteMicrophone,
                 toggleMicrophone,
+                muteVideo,
+                toggleVideo,
                 replaceTracks,
                 viewerChannel,
                 broadcasterChannels,

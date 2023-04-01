@@ -12,9 +12,12 @@
   "author": "Sarmad Khoja",
   "license": "ISC",
   "dependencies": {
+    "@types/styled-components": "^5.1.26",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "socket.io": "^4.6.1"
+    "react-feather": "^2.0.10",
+    "socket.io": "^4.6.1",
+    "styled-components": "^5.3.9"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

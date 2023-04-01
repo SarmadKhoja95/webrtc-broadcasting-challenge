@@ -59,8 +59,17 @@ io.on('connection', (socket) => {
     console.log('emit answer: ')
     socket.to(broadcasters[event.room].id).emit("answer", socket.id, event.sdp);
   });
+
+  socket.on("broadcaster left", (user) => {
+    console.log('broadcaster left:', user)
+    delete broadcasters[user.room]
+    socket.leave(user.room)
+    socket.broadcast.emit('broadcasters', broadcasters);
+  })
+
 });
 
 server.listen(port, () => {
   console.log(`[server]: Server is running on port ${port}`);
+  
 });
